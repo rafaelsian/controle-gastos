@@ -1165,7 +1165,7 @@
         <div class="section">
           <div class="section-header">
             <span class="section-title">Regras de categorização</span>
-            <button class="btn btn-ghost" onclick="addRule()">+ Nova regra</button>
+            <button class="btn btn-ghost" onclick="showRuleModal()">+ Nova regra</button>
           </div>
           <div class="section-body">
             <p style="font-size:12px;color:var(--text3);margin-bottom:12px;">Palavras-chave que disparam uma categoria automaticamente (sem IA)</p>
@@ -1338,6 +1338,42 @@
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('month-edit-modal')">Cancelar</button>
       <button class="btn btn-primary" onclick="saveMonthEdit()">Salvar alterações</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── RULE MODAL ── -->
+<div class="modal-overlay" id="rule-modal">
+  <div class="modal" style="width:min(560px, 92vw);">
+    <div class="modal-header">
+      <span style="font-size:14px;font-weight:500;">Nova regra de categorização</span>
+      <button class="btn btn-ghost" style="padding:4px 8px;" onclick="closeModal('rule-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div class="field">
+          <label>Palavra-chave</label>
+          <input type="text" id="rule-keyword" placeholder="Ex.: netflix, shell, ifood" style="width:100%;">
+          <div style="font-size:11px;color:var(--text3);margin-top:6px;">A regra será aplicada quando essa palavra aparecer na descrição do lançamento.</div>
+        </div>
+        <div class="form-row">
+          <div class="field" style="flex:1;">
+            <label>Categoria</label>
+            <select id="rule-category" onchange="updateRuleSubcategoryOptions()"></select>
+          </div>
+          <div class="field" style="flex:1;">
+            <label>Subcategoria</label>
+            <select id="rule-subcategory"></select>
+          </div>
+        </div>
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;font-size:12px;color:var(--text2);line-height:1.5;">
+          As categorias e subcategorias mostradas aqui seguem exatamente o que ja esta cadastrado no app.
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('rule-modal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveRule()">Salvar regra</button>
     </div>
   </div>
 </div>
@@ -3255,23 +3291,59 @@ function removeSubcategory(groupIndex, itemIndex) {
   showToast('Subcategoria removida');
 }
 
-function addRule() {
-  const kw = prompt('Palavra-chave (ex: netflix):');
-  if (!kw) return;
-  const cat = prompt('Grupo da categoria (ex: Alimentação):', getFallbackCategory());
-  if (!cat || !findCategoryGroup(cat)) {
-    showToast('Informe um grupo existente');
+function showRuleModal() {
+  const category = getFallbackCategory();
+  const categorySelect = document.getElementById('rule-category');
+  categorySelect.innerHTML = buildCategoryOptions(category);
+  categorySelect.value = category;
+  document.getElementById('rule-keyword').value = '';
+  updateRuleSubcategoryOptions();
+  document.getElementById('rule-modal').classList.add('open');
+  setTimeout(() => document.getElementById('rule-keyword').focus(), 0);
+}
+
+function updateRuleSubcategoryOptions(selected = '') {
+  const category = document.getElementById('rule-category').value || getFallbackCategory();
+  setSubcategorySelectOptions('rule-subcategory', category, selected);
+}
+
+function saveRule() {
+  const keywordInput = document.getElementById('rule-keyword');
+  const keyword = keywordInput.value.trim().toLowerCase();
+  const category = document.getElementById('rule-category').value;
+  const subcategory = document.getElementById('rule-subcategory').value;
+  const group = findCategoryGroup(category);
+  if (!keyword) {
+    showToast('Informe uma palavra-chave');
+    keywordInput.focus();
     return;
   }
-  const sub = prompt('Subcategoria (opcional):', '');
+  if (!group) {
+    showToast('Escolha uma categoria existente');
+    return;
+  }
+  const duplicate = state.rules.some(rule =>
+    normalizeText(rule.keyword) === normalizeText(keyword) &&
+    normalizeText(rule.category) === normalizeText(group.name) &&
+    normalizeText(rule.subcategory || '') === normalizeText(subcategory || '')
+  );
+  if (duplicate) {
+    showToast('Essa regra ja existe');
+    return;
+  }
   state.rules.unshift({
-    keyword: kw.toLowerCase(),
-    category: findCategoryGroup(cat).name,
-    subcategory: sub ? ensureSubcategory(cat, sub) : ''
+    keyword,
+    category: group.name,
+    subcategory: subcategory || ''
   });
   save();
+  closeModal('rule-modal');
   renderCategories();
   showToast('Regra adicionada');
+}
+
+function addRule() {
+  showRuleModal();
 }
 
 function removeRule(i) {
