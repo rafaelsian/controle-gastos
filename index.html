@@ -214,7 +214,7 @@
     border-bottom: 1px solid var(--border);
   }
 
-  .section-title { font-size: 13px; font-weight: 500; letter-spacing: 0.2px; }
+  .section-title { font-size: 13px; font-weight: 500; letter-spacing: 0.2px; line-height: 1; }
 
   .section-body { padding: 16px 18px; }
 
@@ -227,12 +227,13 @@
     letter-spacing: 1px;
     color: var(--text3);
     text-transform: uppercase;
-    padding: 0 8px 8px;
+    padding: 8px;
     border-bottom: 1px solid var(--border);
     font-weight: normal;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    vertical-align: middle;
   }
 
   td {
@@ -253,6 +254,34 @@
   th.num { text-align: right; }
   .table-cell-pad-start { padding-left: 18px !important; }
   .table-cell-pad-end { padding-right: 18px !important; }
+
+  .sort-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 6px;
+    background: none;
+    border: none;
+    color: inherit;
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    padding: 0;
+    cursor: pointer;
+    min-height: 14px;
+    width: 100%;
+  }
+
+  th.num .sort-btn {
+    justify-content: flex-end;
+  }
+
+  .sort-indicator {
+    color: var(--text3);
+    font-size: 10px;
+    min-width: 10px;
+    text-align: center;
+  }
 
   /* ── CATEGORY PILL ── */
   .pill {
@@ -583,7 +612,25 @@
 
   .scrollable { max-height: 320px; overflow-y: auto; }
   .scrollable-tx { max-height: 520px; overflow: auto; }
-  .scrollable-tx table { min-width: 900px; }
+  .scrollable-tx table { min-width: 1140px; }
+  .scrollable-tx th {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    vertical-align: middle;
+    line-height: 1.2;
+  }
+  .scrollable-tx .sort-btn {
+    white-space: normal;
+    align-items: center;
+    min-height: 100%;
+    height: 100%;
+  }
+
+  .ledger-header-row th {
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
 
   .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 
@@ -745,6 +792,7 @@
             <span id="month-label-tx">—</span>
             <button onclick="nextMonth()">&#8250;</button>
           </div>
+          <button class="btn btn-ghost" onclick="showMonthEditModal()">Editar mês</button>
           <button class="btn btn-ghost" onclick="showAddModal()">+ Adicionar</button>
           <button class="btn btn-ghost" onclick="exportCSV()">↓ Exportar</button>
         </div>
@@ -812,29 +860,29 @@
           <div class="scrollable-tx">
             <table style="table-layout:fixed;">
               <colgroup>
-                <col style="width:100px;"><!-- Grupo -->
-                <col style="width:100px;"><!-- Subgrupo -->
-                <col style="width:80px;"> <!-- Data -->
+                <col style="width:110px;"><!-- Grupo -->
+                <col style="width:120px;"><!-- Subgrupo -->
+                <col style="width:90px;"> <!-- Data -->
                 <col style="width:auto;"><!-- Descritivo (flex) -->
-                <col style="width:90px;"> <!-- Valor -->
-                <col style="width:130px;"><!-- Meio de Pagamento -->
-                <col style="width:110px;"><!-- Conta Corrente -->
-                <col style="width:90px;"> <!-- Dinheiro -->
-                <col style="width:80px;"> <!-- Cartão -->
-                <col style="width:75px;"> <!-- Invest. -->
+                <col style="width:100px;"> <!-- Valor -->
+                <col style="width:160px;"><!-- Meio de Pagamento -->
+                <col style="width:120px;"><!-- Conta Corrente -->
+                <col style="width:100px;"> <!-- Dinheiro -->
+                <col style="width:90px;"> <!-- Cartão -->
+                <col style="width:90px;"> <!-- Invest. -->
                 <col style="width:70px;"> <!-- Ações -->
               </colgroup>
               <thead><tr class="ledger-header-row">
-                <th class="table-cell-pad-start">Grupo</th>
-                <th>Subgrupo</th>
-                <th>Data</th>
-                <th>Descritivo</th>
-                <th class="num">Valor</th>
-                <th>Meio de Pagamento</th>
-                <th class="num">Conta Corrente</th>
-                <th class="num">Dinheiro</th>
-                <th class="num">Cartão</th>
-                <th class="num">Invest.</th>
+                <th class="table-cell-pad-start"><button class="sort-btn" onclick="setTransactionSort('category')">Grupo <span class="sort-indicator" id="sort-indicator-category"></span></button></th>
+                <th><button class="sort-btn" onclick="setTransactionSort('subcategory')">Subgrupo <span class="sort-indicator" id="sort-indicator-subcategory"></span></button></th>
+                <th><button class="sort-btn" onclick="setTransactionSort('date')">Data <span class="sort-indicator" id="sort-indicator-date"></span></button></th>
+                <th><button class="sort-btn" onclick="setTransactionSort('description')">Descritivo <span class="sort-indicator" id="sort-indicator-description"></span></button></th>
+                <th class="num"><button class="sort-btn" onclick="setTransactionSort('amount')">Valor <span class="sort-indicator" id="sort-indicator-amount"></span></button></th>
+                <th><button class="sort-btn" onclick="setTransactionSort('paymentMethod')">Meio de Pagamento <span class="sort-indicator" id="sort-indicator-paymentMethod"></span></button></th>
+                <th class="num"><button class="sort-btn" onclick="setTransactionSort('checking')">Conta Corrente <span class="sort-indicator" id="sort-indicator-checking"></span></button></th>
+                <th class="num"><button class="sort-btn" onclick="setTransactionSort('cash')">Dinheiro <span class="sort-indicator" id="sort-indicator-cash"></span></button></th>
+                <th class="num"><button class="sort-btn" onclick="setTransactionSort('credit')">Cartão <span class="sort-indicator" id="sort-indicator-credit"></span></button></th>
+                <th class="num"><button class="sort-btn" onclick="setTransactionSort('investment')">Invest. <span class="sort-indicator" id="sort-indicator-investment"></span></button></th>
                 <th class="table-cell-pad-end num">Ações</th>
               </tr></thead>
               <tbody id="tx-tbody">
@@ -1187,6 +1235,43 @@
   </div>
 </div>
 
+<!-- ── MONTH EDIT MODAL ── -->
+<div class="modal-overlay" id="month-edit-modal">
+  <div class="modal" style="width:min(1180px, 96vw);max-height:85vh;">
+    <div class="modal-header">
+      <span style="font-size:14px;font-weight:500;">Editar lançamentos do mês</span>
+      <button class="btn btn-ghost" style="padding:4px 8px;" onclick="closeModal('month-edit-modal')">✕</button>
+    </div>
+    <div class="modal-body" style="padding:0;">
+      <div style="padding:14px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;">
+        <div id="month-edit-label" style="font-size:13px;color:var(--text2);"></div>
+        <div style="font-size:12px;color:var(--text3);" id="month-edit-count"></div>
+      </div>
+      <div class="scrollable" style="max-height:58vh;">
+        <table>
+          <thead><tr>
+            <th class="table-cell-pad-start"><button class="sort-btn" onclick="setMonthEditSort('date')">Data <span class="sort-indicator" id="month-sort-indicator-date"></span></button></th>
+            <th><button class="sort-btn" onclick="setMonthEditSort('description')">Descrição <span class="sort-indicator" id="month-sort-indicator-description"></span></button></th>
+            <th><button class="sort-btn" onclick="setMonthEditSort('category')">Grupo <span class="sort-indicator" id="month-sort-indicator-category"></span></button></th>
+            <th><button class="sort-btn" onclick="setMonthEditSort('subcategory')">Subgrupo <span class="sort-indicator" id="month-sort-indicator-subcategory"></span></button></th>
+            <th class="num"><button class="sort-btn" onclick="setMonthEditSort('amount')">Valor <span class="sort-indicator" id="month-sort-indicator-amount"></span></button></th>
+            <th><button class="sort-btn" onclick="setMonthEditSort('paymentMethod')">Meio <span class="sort-indicator" id="month-sort-indicator-paymentMethod"></span></button></th>
+            <th><button class="sort-btn" onclick="setMonthEditSort('balanceBucket')">Conta <span class="sort-indicator" id="month-sort-indicator-balanceBucket"></span></button></th>
+            <th class="table-cell-pad-end num">Ações</th>
+          </tr></thead>
+          <tbody id="month-edit-tbody">
+            <tr><td colspan="8" class="empty"><strong>Nenhuma transação</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('month-edit-modal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveMonthEdit()">Salvar alterações</button>
+    </div>
+  </div>
+</div>
+
 <!-- ── TOAST ── -->
 <div class="toast" id="toast"></div>
 
@@ -1227,7 +1312,10 @@ let state = {
 let currentMonth = new Date();
 let previewData = [];
 let previewSource = '';
+let monthEditData = [];
 let editingTransactionId = null;
+let transactionSort = { key: 'date', direction: 'desc' };
+let monthEditSort = { key: 'date', direction: 'asc' };
 
 const ACCOUNT_BUCKETS = [
   { key: 'checking', label: 'Conta Corrente' },
@@ -1836,6 +1924,54 @@ function balanceCellHtml(value) {
   return `<span class="${cls}">${fmtLedgerNumber(n)}</span>`;
 }
 
+function compareValues(a, b, direction = 'asc') {
+  let result = 0;
+  if (typeof a === 'number' || typeof b === 'number') {
+    result = (Number(a) || 0) - (Number(b) || 0);
+  } else {
+    result = String(a || '').localeCompare(String(b || ''), 'pt-BR', { sensitivity: 'base' });
+  }
+  return direction === 'asc' ? result : -result;
+}
+
+function sortIndicator(direction) {
+  return direction === 'asc' ? '▲' : '▼';
+}
+
+function updateTransactionSortIndicators() {
+  ['category','subcategory','date','description','amount','paymentMethod','checking','cash','credit','investment'].forEach(key => {
+    const el = document.getElementById(`sort-indicator-${key}`);
+    if (!el) return;
+    el.textContent = transactionSort.key === key ? sortIndicator(transactionSort.direction) : '';
+  });
+}
+
+function updateMonthEditSortIndicators() {
+  ['date','description','category','subcategory','amount','paymentMethod','balanceBucket'].forEach(key => {
+    const el = document.getElementById(`month-sort-indicator-${key}`);
+    if (!el) return;
+    el.textContent = monthEditSort.key === key ? sortIndicator(monthEditSort.direction) : '';
+  });
+}
+
+function setTransactionSort(key) {
+  if (transactionSort.key === key) {
+    transactionSort.direction = transactionSort.direction === 'asc' ? 'desc' : 'asc';
+  } else {
+    transactionSort = { key, direction: key === 'amount' ? 'desc' : 'asc' };
+  }
+  renderTransactions();
+}
+
+function setMonthEditSort(key) {
+  if (monthEditSort.key === key) {
+    monthEditSort.direction = monthEditSort.direction === 'asc' ? 'desc' : 'asc';
+  } else {
+    monthEditSort = { key, direction: key === 'amount' ? 'desc' : 'asc' };
+  }
+  renderMonthEditTable();
+}
+
 function pillHtml(cat, label) {
   const base = cat || 'Outros';
   const slug = base.toLowerCase().replace(/[^a-záàâãéèêíóòôõúç]/gi, '');
@@ -1968,7 +2104,39 @@ function renderTransactions() {
   if (paymentMethod) rows = rows.filter(({ tx }) => tx.paymentMethod === paymentMethod);
   if (balanceBucket) rows = rows.filter(({ tx }) => tx.balanceBucket === balanceBucket);
 
+  rows = [...rows].sort((a, b) => {
+    const key = transactionSort.key;
+    const av = a.tx;
+    const bv = b.tx;
+
+    if (['checking','cash','credit','investment'].includes(key)) {
+      return compareValues(a.balances[key], b.balances[key], transactionSort.direction);
+    }
+
+    const map = {
+      category: av.category,
+      subcategory: av.subcategory,
+      date: av.date,
+      description: av.description,
+      amount: av.amount,
+      paymentMethod: paymentMethodLabel(av.paymentMethod)
+    };
+    const mapB = {
+      category: bv.category,
+      subcategory: bv.subcategory,
+      date: bv.date,
+      description: bv.description,
+      amount: bv.amount,
+      paymentMethod: paymentMethodLabel(bv.paymentMethod)
+    };
+
+    const primary = compareValues(map[key], mapB[key], transactionSort.direction);
+    if (primary !== 0) return primary;
+    return compareValues(av.id, bv.id, 'asc');
+  });
+
   document.getElementById('tx-table-count').textContent = `${rows.length} transações`;
+  updateTransactionSortIndicators();
 
   const tbody = document.getElementById('tx-tbody');
   const openingRow = `<tr class="ledger-opening-row">
@@ -2041,6 +2209,112 @@ function clearFilters() {
   document.getElementById('filter-payment-method').value = '';
   document.getElementById('filter-bucket').value = '';
   renderTransactions();
+}
+
+function showMonthEditModal() {
+  const monthTransactions = txForMonth(currentMonth).sort((a, b) => {
+    const byDate = String(a.date || '').localeCompare(String(b.date || ''));
+    if (byDate !== 0) return byDate;
+    return String(a.id || '').localeCompare(String(b.id || ''));
+  });
+
+  monthEditData = monthTransactions.map(tx => ({ ...tx }));
+  document.getElementById('month-edit-label').textContent = monthLabel(currentMonth);
+  document.getElementById('month-edit-count').textContent = `${monthEditData.length} lançamentos`;
+  renderMonthEditTable();
+  document.getElementById('month-edit-modal').classList.add('open');
+}
+
+function renderMonthEditTable() {
+  monthEditData = [...monthEditData].sort((a, b) => {
+    const key = monthEditSort.key;
+    const mapA = {
+      date: a.date,
+      description: a.description,
+      category: a.category,
+      subcategory: a.subcategory,
+      amount: a.amount,
+      paymentMethod: paymentMethodLabel(a.paymentMethod),
+      balanceBucket: bucketLabel(a.balanceBucket)
+    };
+    const mapB = {
+      date: b.date,
+      description: b.description,
+      category: b.category,
+      subcategory: b.subcategory,
+      amount: b.amount,
+      paymentMethod: paymentMethodLabel(b.paymentMethod),
+      balanceBucket: bucketLabel(b.balanceBucket)
+    };
+    const primary = compareValues(mapA[key], mapB[key], monthEditSort.direction);
+    if (primary !== 0) return primary;
+    return compareValues(a.id, b.id, 'asc');
+  });
+
+  const tbody = document.getElementById('month-edit-tbody');
+  updateMonthEditSortIndicators();
+  if (monthEditData.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" class="empty"><strong>Nenhuma transação</strong>Não há lançamentos neste mês.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = monthEditData.map((tx, index) => `
+    <tr>
+      <td class="table-cell-pad-start"><input type="date" value="${escapeHtml(tx.date || '')}" onchange="monthEditData[${index}].date=this.value"></td>
+      <td><input type="text" value="${escapeHtml(tx.description || '')}" onchange="monthEditData[${index}].description=this.value" style="width:100%;"></td>
+      <td>
+        <select onchange="updateMonthEditCategory(${index}, this.value)">
+          ${buildCategoryOptions(tx.category)}
+        </select>
+      </td>
+      <td>
+        <select onchange="monthEditData[${index}].subcategory=this.value">
+          ${buildSubcategoryOptions(tx.category, tx.subcategory)}
+        </select>
+      </td>
+      <td class="num"><input type="number" step="0.01" value="${Number(tx.amount || 0)}" onchange="monthEditData[${index}].amount=parseFloat(this.value)||0" style="width:120px;text-align:right;"></td>
+      <td>
+        <select onchange="monthEditData[${index}].paymentMethod=this.value">
+          ${buildPaymentMethodOptions(tx.paymentMethod)}
+        </select>
+      </td>
+      <td>
+        <select onchange="monthEditData[${index}].balanceBucket=this.value">
+          ${buildBucketOptions(tx.balanceBucket)}
+        </select>
+      </td>
+      <td class="table-cell-pad-end num">
+        <button class="icon-btn icon-btn-danger" onclick="removeMonthEditRow(${index})" title="Remover lançamento">✕</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function updateMonthEditCategory(index, category) {
+  if (!monthEditData[index]) return;
+  monthEditData[index].category = category;
+  if (!getSubcategories(category).some(name => normalizeText(name) === normalizeText(monthEditData[index].subcategory))) {
+    monthEditData[index].subcategory = '';
+  }
+  renderMonthEditTable();
+}
+
+function removeMonthEditRow(index) {
+  monthEditData.splice(index, 1);
+  document.getElementById('month-edit-count').textContent = `${monthEditData.length} lançamentos`;
+  renderMonthEditTable();
+}
+
+function saveMonthEdit() {
+  const currentIds = new Set(txForMonth(currentMonth).map(tx => tx.id));
+  state.transactions = state.transactions.filter(tx => !currentIds.has(tx.id));
+  state.transactions.push(...monthEditData.map(tx => ({ ...tx })));
+  save();
+  closeModal('month-edit-modal');
+  renderTransactions();
+  renderDashboard();
+  renderEvolution();
+  showToast('Lançamentos do mês atualizados');
 }
 
 // ════════════════════════════════════════
