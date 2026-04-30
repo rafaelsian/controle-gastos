@@ -591,6 +591,15 @@
     background: rgba(196,92,92,0.2);
   }
 
+  .uncategorized-text {
+    color: var(--red) !important;
+  }
+
+  .preview-scrollable {
+    max-height: min(960px, 72vh);
+    overflow-y: auto;
+  }
+
   @media (max-width: 1200px) {
     .opening-balance-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1062,13 +1071,14 @@
           </div>
         </div>
         <div class="section-body" style="padding:0;">
-          <div class="scrollable">
+          <div class="preview-scrollable">
             <table>
               <thead><tr>
                 <th style="padding-left:18px;">Data</th>
                 <th>Descrição</th>
                 <th>Categoria</th>
                 <th class="num" style="padding-right:18px;">Valor</th>
+                <th class="table-cell-pad-end num">Ações</th>
               </tr></thead>
               <tbody id="preview-tbody"></tbody>
             </table>
@@ -1886,6 +1896,17 @@ function categoryDetailText(tx) {
   return tx.subcategory ? `${tx.category} / ${tx.subcategory}` : (tx.category || 'Outros');
 }
 
+function isTransactionUncategorized(tx) {
+  if (!tx || !tx.category) return true;
+  const group = findCategoryGroup(tx.category);
+  if (!group) return true;
+  const sub = String(tx.subcategory || '').trim();
+  if (!sub) return normalizeText(tx.category) === 'outros';
+  const subExists = getSubcategories(tx.category).some(name => normalizeText(name) === normalizeText(sub));
+  if (!subExists) return true;
+  return normalizeText(tx.category) === 'outros' && normalizeText(sub) === 'outros';
+}
+
 function sourceLabel(source) {
   return source || '—';
 }
@@ -2160,8 +2181,8 @@ function renderTransactions() {
   }
 
   tbody.innerHTML = openingRow + rows.map(({ tx, balances }) => `<tr>
-    <td class="table-cell-pad-start">${escapeHtml(tx.category || 'Outros')}</td>
-    <td>${escapeHtml(tx.subcategory || '—')}</td>
+    <td class="table-cell-pad-start ${isTransactionUncategorized(tx) ? 'uncategorized-text' : ''}">${escapeHtml(tx.category || 'Sem categoria')}</td>
+    <td class="${isTransactionUncategorized(tx) ? 'uncategorized-text' : ''}">${escapeHtml(tx.subcategory || (isTransactionUncategorized(tx) ? 'Sem categoria' : '—'))}</td>
     <td>${formatDate(tx.date)}</td>
     <td style="white-space:normal;overflow:visible;" title="${escapeHtml(tx.description)}">
       <div style="display:flex;flex-direction:column;gap:3px;">
@@ -2651,6 +2672,10 @@ function showPreview(txs, source) {
 
 function renderPreviewTable() {
   const tbody = document.getElementById('preview-tbody');
+  if (previewData.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5" class="empty"><strong>Nenhuma transação</strong>Todas as linhas foram removidas da importação.</td></tr>`;
+    return;
+  }
   tbody.innerHTML = previewData.map((t, i) => `<tr>
     <td style="padding-left:18px;">${formatDate(t.date)}</td>
     <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(t.description)}</td>
@@ -2667,6 +2692,9 @@ function renderPreviewTable() {
     <td class="num" style="padding-right:18px;color:${t.amount>=0?'var(--green)':'var(--red)'}">
       ${fmtSigned(t.amount)}
     </td>
+    <td class="table-cell-pad-end num">
+      <button class="icon-btn icon-btn-danger" onclick="removePreviewRow(${i})" title="Remover da importação">✕</button>
+    </td>
   </tr>`).join('');
 }
 
@@ -2682,6 +2710,11 @@ function updatePreviewCategory(index, category) {
 function updatePreviewSubcategory(index, subcategory) {
   if (!previewData[index]) return;
   previewData[index].subcategory = subcategory;
+}
+
+function removePreviewRow(index) {
+  previewData.splice(index, 1);
+  renderPreviewTable();
 }
 
 async function autoCategorizePreview() {
