@@ -2446,50 +2446,67 @@ function parseCSV(text, type) {
   const rows = lines.slice(1).map(l => parseLine(l));
 
   const txs = [];
+  const findHeader = (...patterns) => headers.findIndex(h => patterns.some(pattern => h === pattern || h.includes(pattern)));
+  const parseAmountValue = raw => {
+    const normalized = String(raw || '')
+      .trim()
+      .replace(/\s/g, '')
+      .replace(/\.(?=\d{3}(?:\D|$))/g, '')
+      .replace(',', '.');
+    return parseFloat(normalized);
+  };
 
   if (type === 'nubank-credit') {
     // date, title, amount
-    const di = headers.findIndex(h => h.includes('date') || h === 'data');
-    const ti = headers.findIndex(h => h.includes('title') || h.includes('descri'));
-    const ai = headers.findIndex(h => h.includes('amount') || h.includes('valor'));
+    const di = findHeader('date', 'data');
+    const ti = findHeader('title', 'descri');
+    const ai = findHeader('amount', 'valor');
     rows.forEach(r => {
       if (!r[di] || !r[ai]) return;
-      const amount = -Math.abs(parseFloat((r[ai]||'').replace(',','.')));
+      const amount = -Math.abs(parseAmountValue(r[ai]));
       if (isNaN(amount)) return;
       txs.push({ date: normalizeDate(r[di]), description: r[ti]||'', amount, rawAmount: r[ai] });
     });
   } else if (type === 'nubank-account') {
-    // Data, Valor, Identificador, Descrição
-    const di = headers.findIndex(h => h.includes('data'));
-    const vi = headers.findIndex(h => h.includes('valor'));
-    const descI = headers.findIndex(h => h.includes('descri') || h.includes('identif'));
+    // CSV real do Nubank Conta: Data, Valor, Identificador, Descrição
+    const di = findHeader('data');
+    const vi = findHeader('valor');
+    const ii = findHeader('identificador');
+    const descI = findHeader('descrição', 'descricao');
+    if ([di, vi, ii, descI].some(index => index === -1)) {
+      throw new Error('Formato de CSV Nubank Conta não reconhecido. Esperado: Data, Valor, Identificador, Descrição.');
+    }
     rows.forEach(r => {
       if (!r[di] || !r[vi]) return;
-      const amount = parseFloat((r[vi]||'').replace(',','.'));
+      const amount = parseAmountValue(r[vi]);
       if (isNaN(amount)) return;
-      txs.push({ date: normalizeDate(r[di]), description: r[descI]||r[di]||'', amount, rawAmount: r[vi] });
+      txs.push({
+        date: normalizeDate(r[di]),
+        description: r[descI] || '',
+        amount,
+        rawAmount: r[vi],
+        externalId: r[ii] || ''
+      });
     });
   } else if (type === 'itau-account') {
     // Data, Histórico, Valor
-    const di = headers.findIndex(h => h.includes('data'));
-    const hi = headers.findIndex(h => h.includes('hist') || h.includes('descri'));
-    const vi = headers.findIndex(h => h.includes('valor'));
+    const di = findHeader('data');
+    const hi = findHeader('hist', 'descri');
+    const vi = findHeader('valor');
     rows.forEach(r => {
       if (!r[di] || !r[vi]) return;
-      const raw = (r[vi]||'').replace(/\./g,'').replace(',','.');
-      const amount = parseFloat(raw);
+      const amount = parseAmountValue(r[vi]);
       if (isNaN(amount)) return;
       txs.push({ date: normalizeDate(r[di]), description: r[hi]||'', amount, rawAmount: r[vi] });
     });
   } else if (type === 'itau-credit') {
     // Data, Estabelecimento, Valor
-    const di = headers.findIndex(h => h.includes('data'));
-    const ei = headers.findIndex(h => h.includes('estab') || h.includes('descri') || h.includes('hist'));
-    const vi = headers.findIndex(h => h.includes('valor'));
+    const di = findHeader('data');
+    const ei = findHeader('estab', 'descri', 'hist');
+    const vi = findHeader('valor');
     rows.forEach(r => {
       if (!r[di] || !r[vi]) return;
-      const raw = (r[vi]||'').replace(/\./g,'').replace(',','.');
-      const amount = -Math.abs(parseFloat(raw));
+      const amount = -Math.abs(parseAmountValue(r[vi]));
       if (isNaN(amount)) return;
       txs.push({ date: normalizeDate(r[di]), description: r[ei]||'', amount, rawAmount: r[vi] });
     });
